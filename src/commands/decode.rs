@@ -227,15 +227,6 @@ pub async fn decode(client: &RpcClient, mint_account: &str) -> Result<Metadata, 
             return Err(DecodeError::NetworkError(err.to_string()));
         }
     };
-    // let account_data = match retry(
-    //     Exponential::from_millis_with_factor(250, 2.0).take(3),
-    //     || client.get_account_data(&metadata_pda),
-    // ) {
-    //     Ok(data) => data,
-    //     Err(err) => {
-    //         return Err(DecodeError::NetworkError(err.to_string()));
-    //     }
-    // };
 
     let metadata: Metadata = match Metadata::deserialize(&mut account_data.as_slice()) {
         Ok(m) => m,
