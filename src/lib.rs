@@ -6,3 +6,4 @@ pub mod data;
 pub mod utils;
 pub mod wtf_errors;
 pub mod errors;
+pub mod cache;
