@@ -11,8 +11,8 @@ pub struct SetUpdateAuthorityAllArgs {
     pub retries: u8,
 }
 
-pub struct SetUpdateAuthorityArgs {
-    pub client: Arc<RpcClient>,
+pub struct SetUpdateAuthorityArgs<'a> {
+    pub client: &'a RpcClient,
     pub keypair: Arc<Keypair>,
     pub payer: Arc<Keypair>,
     pub mint_account: String,
@@ -62,7 +62,7 @@ pub async fn set_update_authority_one(
     Ok(())
 }
 
-async fn set_update_authority(args: SetUpdateAuthorityArgs) -> Result<(), ActionError> {
+pub async fn set_update_authority<'a>(args: &SetUpdateAuthorityArgs<'a>) -> Result<(), ActionError> {
     let mint_pubkey = Pubkey::from_str(&args.mint_account).expect("Invalid mint account");
     let update_authority = args.keypair.pubkey();
     let new_update_authority =
@@ -109,8 +109,8 @@ impl Action for SetUpdateAuthorityAll {
 
     async fn action(args: RunActionArgs) -> Result<(), ActionError> {
         // Set Update Authority can have an optional payer.
-        set_update_authority(SetUpdateAuthorityArgs {
-            client: args.client.clone(),
+        set_update_authority(&SetUpdateAuthorityArgs {
+            client: &args.client,
             keypair: args.keypair.clone(),
             payer: args.payer.clone(),
             mint_account: args.mint_account,

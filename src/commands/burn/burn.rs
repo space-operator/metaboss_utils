@@ -34,16 +34,15 @@ pub async fn burn_one(
     let solana_opts = parse_solana_config();
     let keypair = parse_keypair(keypair, solana_opts);
 
-    let client = Arc::new(client);
     let keypair = Arc::new(keypair);
 
     let args = BurnArgs {
-        client,
+        client: &client,
         keypair,
         mint_pubkey,
     };
 
-    let sig = burn(args).await?;
+    let sig = burn(&args).await?;
 
     println!("TxId: {}", sig);
 
@@ -101,8 +100,8 @@ pub struct BurnPrintAllArgs {
     pub retries: u8,
 }
 
-pub struct BurnArgs {
-    pub client: Arc<RpcClient>,
+pub struct BurnArgs<'a> {
+    pub client: &'a RpcClient,
     pub keypair: Arc<Keypair>,
     pub mint_pubkey: Pubkey,
 }
@@ -124,8 +123,8 @@ impl Action for BurnAll {
         let mint_pubkey = Pubkey::from_str(&args.mint_account)
             .map_err(|e| ActionError::ActionFailed(args.mint_account.to_string(), e.to_string()))?;
 
-        let _sig = burn(BurnArgs {
-            client: args.client.clone(),
+        let _sig = burn(&BurnArgs {
+            client: &args.client,
             keypair: args.keypair.clone(),
             mint_pubkey,
         })
@@ -158,7 +157,7 @@ pub async fn burn_all(args: BurnAllArgs) -> AnyResult<()> {
     Ok(())
 }
 
-pub async fn burn(args: BurnArgs) -> AnyResult<Signature> {
+pub async fn burn<'a>(args: &BurnArgs<'a>) -> AnyResult<Signature> {
     let assoc = get_associated_token_address(&args.keypair.pubkey(), &args.mint_pubkey);
     let spl_token_program_id = spl_token::id();
     let metadata_pubkey = derive_metadata_pda(&args.mint_pubkey);

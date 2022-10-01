@@ -9,14 +9,14 @@ pub struct SetPrimarySaleHappenedAllArgs {
     pub retries: u8,
 }
 
-struct SetPrimarySaleHappenedArgs {
-    client: Arc<RpcClient>,
-    keypair: Arc<Keypair>,
-    mint_account: String,
+pub struct SetPrimarySaleHappenedArgs<'a> {
+    pub client: &'a RpcClient,
+    pub keypair: Arc<Keypair>,
+    pub mint_account: String,
 }
 
 pub async fn set_primary_sale_happened_one(
-    client: RpcClient,
+    client: &RpcClient,
     keypair_path: Option<String>,
     mint_account: &str,
 ) -> AnyResult<()> {
@@ -51,7 +51,7 @@ pub async fn set_primary_sale_happened_one(
     Ok(())
 }
 
-async fn set_primary_sale_happened(args: SetPrimarySaleHappenedArgs) -> Result<(), ActionError> {
+pub async fn set_primary_sale_happened<'a>(args: &SetPrimarySaleHappenedArgs<'a>) -> Result<(), ActionError> {
     let mint_pubkey = Pubkey::from_str(&args.mint_account).expect("Invalid mint pubkey");
     let update_authority = args.keypair.pubkey();
     let metadata_account = get_metadata_pda(mint_pubkey);
@@ -94,8 +94,8 @@ impl Action for SetPrimarySaleHappenedAll {
     }
 
     async fn action(args: RunActionArgs) -> Result<(), ActionError> {
-        set_primary_sale_happened(SetPrimarySaleHappenedArgs {
-            client: args.client.clone(),
+        set_primary_sale_happened(&SetPrimarySaleHappenedArgs {
+            client: &args.client,
             keypair: args.keypair.clone(),
             mint_account: args.mint_account,
         })
