@@ -1,7 +1,6 @@
 use anyhow::{anyhow, Result as AnyResult};
 use async_trait::async_trait;
 use indexmap::IndexMap;
-use indicatif::ProgressBar;
 use log::info;
 use serde::{Deserialize, Serialize};
 use solana_client::nonblocking::rpc_client::RpcClient;
@@ -155,7 +154,6 @@ pub trait Action {
             info!("Sending network requests...");
             let mut update_tasks = Vec::new();
             println!("Updating NFTs. . .");
-            let pb = ProgressBar::new(remaining_mints.len() as u64);
 
             // Create a vector of futures to execute.
             for mint_address in remaining_mints {
@@ -190,9 +188,7 @@ pub trait Action {
             for task in update_tasks {
                 update_results.push(task.await.unwrap());
                 // Increment the counter and update the progress bar.
-                pb.inc(1);
             }
-            pb.finish_and_clear();
 
             // Partition migration results.
             let (_update_successful, update_failed): (CacheResults, CacheResults) =
