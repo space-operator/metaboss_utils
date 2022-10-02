@@ -1,5 +1,4 @@
 use anyhow::Result as AnyResult;
-use async_trait::async_trait;
 use borsh::BorshDeserialize;
 use mpl_token_metadata::{
     id,
@@ -15,146 +14,17 @@ use solana_sdk::{
 };
 use spl_associated_token_account::get_associated_token_address;
 use spl_token;
-use std::{str::FromStr, sync::Arc};
+use std::sync::Arc;
 
 use crate::{
-    cache::{Action, RunActionArgs, BatchActionArgs},
     derive::{derive_edition_marker_pda, derive_edition_pda, derive_metadata_pda},
-    errors::ActionError,
-    parse::{parse_keypair, parse_solana_config},
     utils::get_largest_token_account_owner,
 };
-
-pub async fn burn_one(
-    client: RpcClient,
-    keypair: Option<String>,
-    mint_address: String,
-) -> AnyResult<()> {
-    let mint_pubkey = Pubkey::from_str(&mint_address)?;
-    let solana_opts = parse_solana_config();
-    let keypair = parse_keypair(keypair, solana_opts);
-
-    let keypair = Arc::new(keypair);
-
-    let args = BurnArgs {
-        client: &client,
-        keypair,
-        mint_pubkey,
-    };
-
-    let sig = burn(&args).await?;
-
-    println!("TxId: {}", sig);
-
-    Ok(())
-}
-
-pub async fn burn_print_one(
-    client: RpcClient,
-    keypair: Option<String>,
-    mint_address: String,
-    master_mint_address: String,
-) -> AnyResult<()> {
-    let mint_pubkey = Pubkey::from_str(&mint_address)?;
-    let master_mint_pubkey = Pubkey::from_str(&master_mint_address)?;
-    let solana_opts = parse_solana_config();
-    let keypair = parse_keypair(keypair, solana_opts);
-
-    let client = Arc::new(client);
-    let keypair = Arc::new(keypair);
-
-    let args = BurnPrintArgs {
-        client,
-        keypair,
-        mint_pubkey,
-        master_mint_pubkey,
-    };
-
-    let sig = burn_print(args).await?;
-
-    println!("TxId: {}", sig);
-
-    Ok(())
-}
-
-pub struct BurnAll {}
-
-pub struct BurnPrintAll {}
-
-pub struct BurnAllArgs {
-    pub client: RpcClient,
-    pub keypair: Option<String>,
-    pub mint_list: Option<String>,
-    pub cache_file: Option<String>,
-    pub batch_size: usize,
-    pub retries: u8,
-}
-
-pub struct BurnPrintAllArgs {
-    pub client: RpcClient,
-    pub keypair: Option<String>,
-    pub mint_list: Option<String>,
-    pub master_mint: String,
-    pub cache_file: Option<String>,
-    pub batch_size: usize,
-    pub retries: u8,
-}
 
 pub struct BurnArgs<'a> {
     pub client: &'a RpcClient,
     pub keypair: Arc<Keypair>,
     pub mint_pubkey: Pubkey,
-}
-
-pub struct BurnPrintArgs {
-    pub client: Arc<RpcClient>,
-    pub keypair: Arc<Keypair>,
-    pub mint_pubkey: Pubkey,
-    pub master_mint_pubkey: Pubkey,
-}
-
-#[async_trait]
-impl Action for BurnAll {
-    fn name() -> &'static str {
-        "burn-all"
-    }
-
-    async fn action(args: RunActionArgs) -> Result<(), ActionError> {
-        let mint_pubkey = Pubkey::from_str(&args.mint_account)
-            .map_err(|e| ActionError::ActionFailed(args.mint_account.to_string(), e.to_string()))?;
-
-        let _sig = burn(&BurnArgs {
-            client: &args.client,
-            keypair: args.keypair.clone(),
-            mint_pubkey,
-        })
-        .await
-        .map_err(|e| ActionError::ActionFailed(args.mint_account.to_string(), e.to_string()))?;
-
-        Ok(())
-    }
-}
-
-pub async fn burn_all(args: BurnAllArgs) -> AnyResult<()> {
-    let solana_opts = parse_solana_config();
-    let keypair = parse_keypair(args.keypair, solana_opts);
-
-    // We don't support an optional payer for this action currently.
-    let payer = None;
-
-    let args = BatchActionArgs {
-        client: args.client,
-        keypair,
-        payer,
-        mint_list: args.mint_list,
-        cache_file: args.cache_file,
-        new_value: String::new(),
-        batch_size: args.batch_size,
-        retries: args.retries,
-    };
-    BurnAll::run(args).await?;
-
-    Ok(())
 }
 
 pub async fn burn<'a>(args: &BurnArgs<'a>) -> AnyResult<Signature> {
@@ -204,51 +74,11 @@ pub async fn burn<'a>(args: &BurnArgs<'a>) -> AnyResult<Signature> {
     Ok(sig)
 }
 
-#[async_trait]
-impl Action for BurnPrintAll {
-    fn name() -> &'static str {
-        "burn-print-all"
-    }
-
-    async fn action(args: RunActionArgs) -> Result<(), ActionError> {
-        let mint_pubkey = Pubkey::from_str(&args.mint_account)
-            .map_err(|e| ActionError::ActionFailed(args.mint_account.to_string(), e.to_string()))?;
-        let master_mint_pubkey = Pubkey::from_str(&args.new_value)
-            .map_err(|e| ActionError::ActionFailed(args.mint_account.to_string(), e.to_string()))?;
-
-        let _sig = burn_print(BurnPrintArgs {
-            client: args.client.clone(),
-            keypair: args.keypair.clone(),
-            mint_pubkey,
-            master_mint_pubkey,
-        })
-        .await
-        .map_err(|e| ActionError::ActionFailed(args.mint_account.to_string(), e.to_string()))?;
-
-        Ok(())
-    }
-}
-
-pub async fn burn_print_all(args: BurnPrintAllArgs) -> AnyResult<()> {
-    let solana_opts = parse_solana_config();
-    let keypair = parse_keypair(args.keypair, solana_opts);
-
-    // We don't support an optional payer for this action currently.
-    let payer = None;
-
-    let args = BatchActionArgs {
-        client: args.client,
-        keypair,
-        payer,
-        mint_list: args.mint_list,
-        cache_file: args.cache_file,
-        new_value: args.master_mint,
-        batch_size: args.batch_size,
-        retries: args.retries,
-    };
-    BurnPrintAll::run(args).await?;
-
-    Ok(())
+pub struct BurnPrintArgs {
+    pub client: Arc<RpcClient>,
+    pub keypair: Arc<Keypair>,
+    pub mint_pubkey: Pubkey,
+    pub master_mint_pubkey: Pubkey,
 }
 
 pub async fn burn_print(args: BurnPrintArgs) -> AnyResult<Signature> {
