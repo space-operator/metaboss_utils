@@ -14,7 +14,7 @@ pub fn get_generic_pda(str_seeds: String, program_id: String) {
 
     let program_id =
         Pubkey::from_str(&program_id).expect("Failed to parse pubkey from program_id!");
-    println!("{}", derive_generic_pda(seeds, program_id));
+    log::debug!("{}", derive_generic_pda(seeds, program_id));
 }
 
 fn pubkey_or_bytes(seed: String) -> Vec<u8> {
@@ -30,25 +30,25 @@ fn pubkey_or_bytes(seed: String) -> Vec<u8> {
 pub fn get_metadata_pda(mint_account: String) {
     let pubkey =
         Pubkey::from_str(&mint_account).expect("Failed to parse pubkey from mint account!");
-    println!("{}", derive_metadata_pda(&pubkey));
+    log::debug!("{}", derive_metadata_pda(&pubkey));
 }
 
 pub fn get_edition_pda(mint_account: String) {
     let pubkey =
         Pubkey::from_str(&mint_account).expect("Failed to parse pubkey from mint account!");
-    println!("{}", derive_edition_pda(&pubkey));
+    log::debug!("{}", derive_edition_pda(&pubkey));
 }
 
 pub fn get_edition_marker_pda(mint_account: String, edition_num: u64) {
     let pubkey =
         Pubkey::from_str(&mint_account).expect("Failed to parse pubkey from mint account!");
-    println!("{}", derive_edition_marker_pda(&pubkey, edition_num));
+    log::debug!("{}", derive_edition_marker_pda(&pubkey, edition_num));
 }
 
 pub fn get_cmv2_pda(candy_machine_id: String) {
     let pubkey =
         Pubkey::from_str(&candy_machine_id).expect("Failed to parse pubkey from candy_machine_id!");
-    println!("{}", derive_cmv2_pda(&pubkey));
+    log::debug!("{}", derive_cmv2_pda(&pubkey));
 }
 
 fn derive_generic_pda(seeds: Vec<&[u8]>, program_id: Pubkey) -> Pubkey {

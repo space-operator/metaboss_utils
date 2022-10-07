@@ -2,10 +2,10 @@ use super::common::*;
 use super::data::*;
 
 use crate::commands::theindexio;
+use crate::commands::theindexio::GPAResult;
 use crate::derive::derive_cmv2_pda;
 use crate::parse::{creator_is_verified, is_only_one_option};
-use crate::commands::theindexio::GPAResult;
-use crate::{constants::*, commands::decode::get_metadata_pda};
+use crate::{commands::decode::get_metadata_pda, constants::*};
 
 pub async fn snapshot_mints(client: &RpcClient, args: SnapshotMintsArgs) -> Result<Vec<String>> {
     if !is_only_one_option(&args.creator, &args.update_authority) {
@@ -21,19 +21,17 @@ pub async fn snapshot_mints(client: &RpcClient, args: SnapshotMintsArgs) -> Resu
         args.update_authority,
         args.allow_unverified,
         args.v2,
-    ).await?;
+    )
+    .await?;
 
     mint_addresses.sort_unstable();
 
     Ok(mint_addresses)
 }
 
-pub async fn snapshot_indexed_mints(
-    api_key: String,
-    creator: &str,
-    output: String,
-) -> Result<()> {
-    let results = crate::commands::theindexio::get_verified_creator_accounts(api_key, creator).await?;
+pub async fn snapshot_indexed_mints(api_key: String, creator: &str) -> Result<Vec<String>> {
+    let results =
+        crate::commands::theindexio::get_verified_creator_accounts(api_key, creator).await?;
 
     let mut mint_addresses = Vec::new();
 
@@ -51,10 +49,8 @@ pub async fn snapshot_indexed_mints(
     }
 
     mint_addresses.sort_unstable();
-    let mut file = File::create(format!("{output}/{creator}_mint_accounts.json"))?;
-    serde_json::to_writer_pretty(&mut file, &mint_addresses)?;
 
-    Ok(())
+    Ok(mint_addresses)
 }
 
 pub async fn get_mint_accounts(
@@ -84,7 +80,6 @@ pub async fn get_mint_accounts(
     };
 
     info!("Getting metadata and writing to file...");
-    println!("Getting metadata and writing to file...");
     let mut mint_accounts: Vec<String> = Vec::new();
 
     for (pubkey, account) in accounts {
@@ -104,7 +99,10 @@ pub async fn get_mint_accounts(
     Ok(mint_accounts)
 }
 
-pub async fn snapshot_holders(client: &RpcClient, args: SnapshotHoldersArgs) -> Result<()> {
+pub async fn snapshot_holders(
+    client: &RpcClient,
+    args: SnapshotHoldersArgs,
+) -> Result<Vec<Holder>> {
     let accounts = if let Some(ref update_authority) = args.update_authority {
         get_mints_by_update_authority(client, update_authority).await?
     } else if let Some(ref creator) = args.creator {
@@ -117,10 +115,13 @@ pub async fn snapshot_holders(client: &RpcClient, args: SnapshotHoldersArgs) -> 
         } else {
             get_cm_creator_accounts(client, creator, args.position).await?
         }
-    } else if let Some(ref mint_accounts_file) = args.mint_accounts_file {
+    } else if let Some(ref _mint_accounts_file) = args.mint_accounts_file {
+        unimplemented!();
+        /*
         let file = File::open(mint_accounts_file)?;
         let mint_accounts: Vec<String> = serde_json::from_reader(&file)?;
         get_mint_account_infos(client, mint_accounts).await?
+        */
     } else {
         return Err(anyhow!(
             "Must specify either --update-authority or --candy-machine-id or --mint-accounts-file"
@@ -128,7 +129,6 @@ pub async fn snapshot_holders(client: &RpcClient, args: SnapshotHoldersArgs) -> 
     };
 
     info!("Finding current holders...");
-    println!("Finding current holders...");
     let nft_holders: Arc<Mutex<Vec<Holder>>> = Arc::new(Mutex::new(Vec::new()));
 
     for (metadata_pubkey, account) in accounts.iter() {
@@ -215,34 +215,17 @@ pub async fn snapshot_holders(client: &RpcClient, args: SnapshotHoldersArgs) -> 
         }
     }
 
-    let prefix = if let Some(ref update_authority) = &args.update_authority {
-        update_authority.clone()
-    } else if let Some(creator) = args.creator {
-        creator
-    } else if let Some(mint_accounts_file) = args.mint_accounts_file {
-        str::replace(&mint_accounts_file, ".json", "")
-    } else {
-        return Err(anyhow!(
-            "Must specify either --update-authority or --candy-machine-id or --mint-accounts-file"
-        ));
-    };
-
     nft_holders.lock().unwrap().sort_unstable();
-    let mut file = File::create(format!("{}/{}_holders.json", args.output, prefix))?;
-    serde_json::to_writer_pretty(&mut file, &nft_holders)?;
+    let nft_holders = nft_holders.lock().unwrap().clone();
 
-    Ok(())
+    Ok(nft_holders)
 }
 
-pub async fn snapshot_indexed_holders(
-    api_key: String,
-    creator: &str,
-    output: &str,
-) -> Result<()> {
-    println!("creator: {}", creator);
+pub async fn snapshot_indexed_holders(api_key: String, creator: &str) -> Result<Vec<Holder>> {
+    info!("creator: {}", creator);
     let md_results = theindexio::get_verified_creator_accounts(api_key.clone(), creator).await?;
 
-    println!("Found {} mints", md_results.len());
+    info!("Found {} mints", md_results.len());
 
     // Create a vector of futures to execute.
     let mut tasks = Vec::new();
@@ -253,7 +236,7 @@ pub async fn snapshot_indexed_holders(
         )));
     }
 
-    println!("Tasks created: {}", tasks.len());
+    log::debug!("Tasks created: {}", tasks.len());
 
     // Wait for all the tasks to resolve and push the results to our results vector
     let mut task_results = Vec::new();
@@ -265,28 +248,22 @@ pub async fn snapshot_indexed_holders(
     // Partition decode results.
     let (successful_results, failed_results): (HolderResults, HolderResults) =
         task_results.into_iter().partition(Result::is_ok);
-    println!("Found {} successful results", successful_results.len());
-    println!("Found {} failed results", failed_results.len());
+    info!("Found {} successful results", successful_results.len());
+    error!("Found {} failed results", failed_results.len());
 
     if !failed_results.is_empty() {
-        println!("Failed results: {:?}", failed_results[0]);
-        let errors = failed_results
+        error!("Failed results: {:?}", failed_results[0]);
+        failed_results
             .into_iter()
             .map(Result::unwrap_err)
-            .map(|e| e.to_string())
-            .collect::<Vec<_>>();
-        let f = File::create(format!("{}/{}_errors.json", output, creator))?;
-        serde_json::to_writer_pretty(&f, &errors)?;
+            .for_each(|e| log::error!("Failed result: {}", e));
     }
 
     // Unwrap sucessful
     let nft_holders: Vec<Holder> = successful_results.into_iter().map(Result::unwrap).collect();
-    println!("Found {} holders", nft_holders.len());
+    info!("Found {} holders", nft_holders.len());
 
-    let mut file = File::create(format!("{output}/{creator}_holders.json"))?;
-    serde_json::to_writer_pretty(&mut file, &nft_holders)?;
-
-    Ok(())
+    Ok(nft_holders)
 }
 
 pub async fn get_holder_from_gpa_result(api_key: String, result: GPAResult) -> Result<Holder> {
@@ -364,7 +341,7 @@ pub async fn get_holder_from_gpa_result(api_key: String, result: GPAResult) -> R
     Err(anyhow!("No holder found for mint {}", metadata.mint))
 }
 
-async fn get_mint_account_infos(
+pub async fn get_mint_account_infos(
     client: &RpcClient,
     mint_accounts: Vec<String>,
 ) -> Result<Vec<(Pubkey, Account)>> {
@@ -372,7 +349,6 @@ async fn get_mint_account_infos(
         Arc::new(Mutex::new(Vec::new()));
 
     for mint_account in mint_accounts.iter() {
-
         let mint_pubkey = match Pubkey::from_str(mint_account) {
             Ok(pubkey) => pubkey,
             Err(_) => {
@@ -434,8 +410,7 @@ async fn get_mints_by_update_authority(
 pub async fn snapshot_cm_accounts(
     client: &RpcClient,
     update_authority: &str,
-    output: &str,
-) -> Result<()> {
+) -> Result<CandyMachineProgramAccounts> {
     let accounts = get_cm_accounts_by_update_authority(client, update_authority).await?;
 
     let mut config_accounts = Vec::new();
@@ -462,10 +437,7 @@ pub async fn snapshot_cm_accounts(
         candy_machine_accounts,
     };
 
-    let mut file = File::create(format!("{}/{}_accounts.json", output, update_authority))?;
-    serde_json::to_writer_pretty(&mut file, &candy_machine_program_accounts)?;
-
-    Ok(())
+    Ok(candy_machine_program_accounts)
 }
 
 async fn get_cm_accounts_by_update_authority(

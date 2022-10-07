@@ -39,14 +39,14 @@ pub struct JSONUses {
 
 pub async fn decode_master_edition(client: &RpcClient, mint_account: &str) -> AnyResult<()> {
     let master_edition = decode_master_edition_from_mint(client, mint_account).await?;
-    println!("{:?}", master_edition);
+    log::debug!("{:?}", master_edition);
 
     Ok(())
 }
 
 pub async fn decode_print_edition(client: &RpcClient, mint_account: &str) -> AnyResult<()> {
     let print_edition = decode_edition_from_mint(client, mint_account).await?;
-    println!("{:?}", print_edition);
+    log::debug!("{:?}", print_edition);
 
     Ok(())
 }
@@ -66,7 +66,7 @@ pub async fn decode_edition_marker(
     };
 
     let edition_marker = decode_edition_marker_from_mint(client, mint_account, edition_num).await?;
-    println!("{:?}", edition_marker);
+    log::debug!("{:?}", edition_marker);
 
     Ok(())
 }

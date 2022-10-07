@@ -41,7 +41,7 @@ pub async fn send_and_confirm_transaction(
     // let sig = res?;
     let sig = client.send_and_confirm_transaction(&tx).await?;
 
-    println!("TxId: {}", sig);
+    log::debug!("TxId: {}", sig);
     Ok(sig.to_string())
 }
 
@@ -62,8 +62,6 @@ pub async fn async_send_and_confirm_transaction(
 
     Ok(sig.to_string())
 }
-
-pub async fn retry_with_cache() {}
 
 pub fn generate_phf_map_var(var_name: &str) -> String {
     format!("pub static {var_name}: phf::Map<&'static str, &'static str> = phf_map! {{\n")
