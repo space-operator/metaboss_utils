@@ -12,7 +12,7 @@ use tokio::sync::Semaphore;
 
 pub struct MigrateArgs<'a> {
     pub client: &'a RpcClient,
-    pub keypair: Option<Keypair>,
+    pub keypair: Keypair,
     pub mint_address: String,
     pub candy_machine_id: Option<String>,
     pub mint_list: Option<Vec<String>>,
@@ -153,15 +153,11 @@ pub async fn migrate_collection<'a>(args: &MigrateArgs<'a>) -> AnyResult<()> {
         ));
     }
 
-    if args.keypair.is_none(){
-        return Err(anyhow!("Please specify a keypair to sign transactions with."));
-    }
-
     // Default name, if we don't get an output_file option or a cache file.
     let mut cache = MigrateCache::new();
 
     //TODO: Weird workaround for Keypair not providing Clone
-    let keypair = Arc::new(Keypair::from_base58_string(&args.keypair.as_ref().unwrap().to_base58_string()));
+    let keypair = Arc::new(Keypair::from_base58_string(&args.keypair.to_base58_string()));
 
     let mut mint_accounts = if let Some(candy_machine_id) = args.candy_machine_id.clone() {
         get_mint_accounts(&args.client, &Some(candy_machine_id), 0, None, false, true).await?

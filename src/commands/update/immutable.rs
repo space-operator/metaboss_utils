@@ -5,11 +5,11 @@ use super::common::*;
 pub struct SetImmutableArgs {
     pub client: Arc<RpcClient>,
     pub keypair: Arc<Keypair>,
-    pub mint_account: String,
+    pub mint_account: Pubkey,
 }
 
 pub async fn set_immutable(args: SetImmutableArgs) -> Result<Signature, ActionError> {
-    let mint_pubkey = Pubkey::from_str(&args.mint_account).expect("Invalid mint pubkey");
+    let mint_pubkey = args.mint_account;
     let update_authority = args.keypair.pubkey();
     let metadata_account = get_metadata_pda(mint_pubkey);
 
