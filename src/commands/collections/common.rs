@@ -17,9 +17,4 @@ pub use solana_client::nonblocking::rpc_client::RpcClient;
 pub use solana_sdk::{pubkey::Pubkey, signature::Keypair, signer::Signer};
 pub use std::cmp;
 pub use std::collections::HashMap;
-pub use std::{
-    io::Write,
-    path::Path,
-    str::FromStr,
-    sync::Arc,
-};
+pub use std::{io::Write, path::Path, str::FromStr, sync::Arc};
