@@ -2,13 +2,13 @@ use solana_sdk::signature::Signature;
 
 use super::common::*;
 
-pub struct SetImmutableArgs {
-    pub client: Arc<RpcClient>,
+pub struct SetImmutableArgs<'a> {
+    pub client: &'a RpcClient,
     pub keypair: Arc<Keypair>,
     pub mint_account: Pubkey,
 }
 
-pub async fn set_immutable(args: SetImmutableArgs) -> Result<Signature, ActionError> {
+pub async fn set_immutable<'a>(args: SetImmutableArgs<'a>) -> Result<Signature, ActionError> {
     let mint_pubkey = args.mint_account;
     let update_authority = args.keypair.pubkey();
     let metadata_account = get_metadata_pda(mint_pubkey);
