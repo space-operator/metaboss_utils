@@ -76,7 +76,7 @@ pub async fn decode_raw(client: &RpcClient, mint_account: &str) -> Result<Vec<u8
         Ok(pubkey) => pubkey,
         Err(_) => return Err(DecodeError::PubkeyParseFailed(mint_account.to_string())),
     };
-    let metadata_pda = get_metadata_pda(pubkey);
+    let metadata_pda = get_metadata_pda(&pubkey);
 
     // let account_data = match retry(
     //     Exponential::from_millis_with_factor(250, 2.0).take(3),
@@ -102,7 +102,7 @@ pub async fn decode(client: &RpcClient, mint_account: &str) -> Result<Metadata, 
         Ok(pubkey) => pubkey,
         Err(_) => return Err(DecodeError::PubkeyParseFailed(mint_account.to_string())),
     };
-    let metadata_pda = get_metadata_pda(pubkey);
+    let metadata_pda = get_metadata_pda(&pubkey);
 
     let account_data = match client.get_account_data(&metadata_pda).await {
         Ok(data) => data,
@@ -119,7 +119,7 @@ pub async fn decode(client: &RpcClient, mint_account: &str) -> Result<Metadata, 
     Ok(metadata)
 }
 
-pub fn get_metadata_pda(pubkey: Pubkey) -> Pubkey {
+pub fn get_metadata_pda(pubkey: &Pubkey) -> Pubkey {
     let metaplex_pubkey = METAPLEX_PROGRAM_ID
         .parse::<Pubkey>()
         .expect("Failed to parse Metaplex Program Id");

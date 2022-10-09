@@ -11,7 +11,7 @@ pub struct SetImmutableArgs<'a> {
 pub async fn set_immutable<'a>(args: SetImmutableArgs<'a>) -> Result<Signature, ActionError> {
     let mint_pubkey = args.mint_account;
     let update_authority = args.keypair.pubkey();
-    let metadata_account = get_metadata_pda(mint_pubkey);
+    let metadata_account = get_metadata_pda(&mint_pubkey);
 
     let ix = update_metadata_accounts_v2(
         TOKEN_METADATA_PROGRAM_ID,

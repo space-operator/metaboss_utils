@@ -49,8 +49,8 @@ pub async fn update_creator_by_position(
         collection: old_md.collection,
         uses: old_md.uses,
     };
-
-    update_data(client, &keypair, mint_account, new_data).await?;
+    let mint_account = Pubkey::from_str(mint_account)?;
+    update_data(client, &keypair, &mint_account, new_data).await?;
     Ok(())
 }
 
@@ -112,6 +112,8 @@ pub async fn update_creator(
         uses: old_md.uses,
     };
 
+    let mint_account = Pubkey::from_str(&mint_account)
+        .map_err(|e| ActionError::ActionFailed(mint_account, e.to_string()))?;
     match update_data(&client, &keypair, &mint_account, new_data).await {
         Ok(_) => Ok(()),
         Err(e) => Err(ActionError::ActionFailed(

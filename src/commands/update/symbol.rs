@@ -33,8 +33,9 @@ pub async fn update_symbol(args: UpdateSymbolArgs) -> Result<(), ActionError> {
         uses: old_md.uses,
     };
 
-    update_data(&args.client, &args.keypair, &args.mint_account, new_data)
+    let mint_account = Pubkey::from_str(&args.mint_account).map_err(|e|ActionError::ActionFailed(args.mint_account.clone(), e.to_string()))?;
+    update_data(&args.client, &args.keypair, &mint_account, new_data)
         .await
-        .map_err(|e| ActionError::ActionFailed(args.mint_account.to_string(), e.to_string()))?;
+        .map_err(|e| ActionError::ActionFailed(args.mint_account.clone(), e.to_string()))?;
     Ok(())
 }

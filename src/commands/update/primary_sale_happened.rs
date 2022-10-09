@@ -13,7 +13,7 @@ pub async fn set_primary_sale_happened<'a>(
 ) -> Result<Signature, ActionError> {
     let mint_pubkey = args.mint_account;
     let update_authority = args.keypair.pubkey();
-    let metadata_account = get_metadata_pda(mint_pubkey);
+    let metadata_account = get_metadata_pda(&mint_pubkey);
 
     let ix = update_metadata_accounts_v2(
         TOKEN_METADATA_PROGRAM_ID,

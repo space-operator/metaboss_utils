@@ -356,8 +356,8 @@ pub async fn get_mint_account_infos(
                 continue;
             }
         };
-
-        let metadata_pubkey = get_metadata_pda(mint_pubkey);
+        
+        let metadata_pubkey = get_metadata_pda(&mint_pubkey);
 
         let account_info = match client.get_account(&metadata_pubkey).await {
             Ok(account) => account,

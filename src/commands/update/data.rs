@@ -1,11 +1,10 @@
 use anyhow::Result;
-use log::info;
 use mpl_token_metadata::{instruction::update_metadata_accounts_v2, state::DataV2};
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::{
     pubkey::Pubkey,
     signer::{keypair::Keypair, Signer},
-    transaction::Transaction,
+    transaction::Transaction, signature::Signature,
 };
 use std::str::FromStr;
 
@@ -15,12 +14,11 @@ use crate::constants::*;
 pub async fn update_data(
     client: &RpcClient,
     keypair: &Keypair,
-    mint_account: &str,
+    mint_account: &Pubkey,
     data: DataV2,
-) -> Result<()> {
+) -> Result<Signature> {
     let program_id = Pubkey::from_str(METAPLEX_PROGRAM_ID)?;
-    let mint_pubkey = Pubkey::from_str(mint_account)?;
-    let metadata_account = get_metadata_pda(mint_pubkey);
+    let metadata_account = get_metadata_pda(mint_account);
 
     let update_authority = keypair.pubkey();
 
@@ -43,7 +41,5 @@ pub async fn update_data(
 
     let sig = client.send_and_confirm_transaction(&tx).await?;
 
-    info!("Mint: {:?}, Tx sig: {:?}", mint_account, sig);
-
-    Ok(())
+    Ok(sig)
 }

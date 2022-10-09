@@ -24,6 +24,7 @@ pub async fn update_name(
         uses: old_md.uses,
     };
 
-    update_data(client, &parsed_keypair, mint_account, new_data).await?;
+    let mint_account = Pubkey::from_str(&mint_account)?;
+    update_data(client, &parsed_keypair, &mint_account, new_data).await?;
     Ok(())
 }
