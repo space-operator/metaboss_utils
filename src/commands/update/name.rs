@@ -5,7 +5,7 @@ use super::{common::*, update_data};
 pub async fn update_name(
     client: &RpcClient,
     keypair: Keypair,
-    mint_account: &str,
+    mint_account: &Pubkey,
     new_name: &str,
 ) -> AnyResult<Signature> {
     let old_md = decode(client, mint_account).await?;
@@ -21,7 +21,6 @@ pub async fn update_name(
         uses: old_md.uses,
     };
 
-    let mint_account = Pubkey::from_str(&mint_account)?;
-    let sig = update_data(client, &keypair, &mint_account, new_data).await?;
+    let sig = update_data(client, &keypair, mint_account, new_data).await?;
     Ok(sig)
 }

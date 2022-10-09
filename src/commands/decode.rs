@@ -97,12 +97,8 @@ pub async fn decode_raw(client: &RpcClient, mint_account: &str) -> Result<Vec<u8
     Ok(account_data)
 }
 
-pub async fn decode(client: &RpcClient, mint_account: &str) -> Result<Metadata, DecodeError> {
-    let pubkey = match Pubkey::from_str(mint_account) {
-        Ok(pubkey) => pubkey,
-        Err(_) => return Err(DecodeError::PubkeyParseFailed(mint_account.to_string())),
-    };
-    let metadata_pda = get_metadata_pda(&pubkey);
+pub async fn decode(client: &RpcClient, pubkey: &Pubkey) -> Result<Metadata, DecodeError> {
+    let metadata_pda = get_metadata_pda(pubkey);
 
     let account_data = match client.get_account_data(&metadata_pda).await {
         Ok(data) => data,

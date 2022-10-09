@@ -13,7 +13,7 @@ pub struct UpdateSymbolAllArgs {
 pub struct UpdateSymbolArgs {
     pub client: Arc<RpcClient>,
     pub keypair: Arc<Keypair>,
-    pub mint_account: String,
+    pub mint_account: Pubkey,
     pub new_symbol: String,
 }
 
@@ -33,9 +33,9 @@ pub async fn update_symbol(args: UpdateSymbolArgs) -> Result<(), ActionError> {
         uses: old_md.uses,
     };
 
-    let mint_account = Pubkey::from_str(&args.mint_account).map_err(|e|ActionError::ActionFailed(args.mint_account.clone(), e.to_string()))?;
+    let mint_account = args.mint_account;
     update_data(&args.client, &args.keypair, &mint_account, new_data)
         .await
-        .map_err(|e| ActionError::ActionFailed(args.mint_account.clone(), e.to_string()))?;
+        .map_err(|e| ActionError::ActionFailed(args.mint_account.to_string(), e.to_string()))?;
     Ok(())
 }
