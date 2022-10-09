@@ -1,18 +1,13 @@
 use solana_sdk::signature::Signature;
 
-use crate::parse::{keypair::parse_keypair, solana_config::parse_solana_config};
-
 use super::{common::*, update_data};
 
 pub async fn update_name(
     client: &RpcClient,
-    keypair: Option<String>,
+    keypair: Keypair,
     mint_account: &str,
     new_name: &str,
 ) -> AnyResult<Signature> {
-    let solana_opts = parse_solana_config();
-    let parsed_keypair = parse_keypair(keypair, solana_opts)?;
-
     let old_md = decode(client, mint_account).await?;
     let data_with_old_name = old_md.data;
 
@@ -27,6 +22,6 @@ pub async fn update_name(
     };
 
     let mint_account = Pubkey::from_str(&mint_account)?;
-    let sig = update_data(client, &parsed_keypair, &mint_account, new_data).await?;
+    let sig = update_data(client, &keypair, &mint_account, new_data).await?;
     Ok(sig)
 }
