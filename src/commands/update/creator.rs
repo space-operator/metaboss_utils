@@ -56,8 +56,8 @@ pub async fn update_creator_by_position(
 }
 
 pub async fn update_creator(
-    client: Arc<RpcClient>,
-    keypair: Arc<Keypair>,
+    client: &RpcClient,
+    keypair: Keypair,
     mint_account: Pubkey,
     new_creators: String,
     should_append: bool,
