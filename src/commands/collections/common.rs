@@ -18,7 +18,6 @@ pub use solana_sdk::{pubkey::Pubkey, signature::Keypair, signer::Signer};
 pub use std::cmp;
 pub use std::collections::HashMap;
 pub use std::{
-    fs::{File, OpenOptions},
     io::Write,
     path::Path,
     str::FromStr,

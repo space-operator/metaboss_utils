@@ -17,11 +17,9 @@ pub struct MigrateArgs {
     pub keypair: Option<String>,
     pub mint_address: String,
     pub candy_machine_id: Option<String>,
-    pub mint_list: Option<String>,
-    pub cache_file: Option<String>,
+    pub mint_list: Option<Vec<String>>,
     pub retries: u8,
     pub batch_size: usize,
-    pub output_file: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -157,14 +155,7 @@ pub async fn migrate_collection(args: MigrateArgs) -> AnyResult<()> {
         ));
     }
 
-    if args.cache_file.is_some() && (args.candy_machine_id.is_some() || args.mint_list.is_some()) {
-        return Err(anyhow!(
-            "Cannot use cache option with either a candy machine id or an mint_list file."
-        ));
-    }
-
     // Default name, if we don't get an output_file option or a cache file.
-    let mut cache_file_name = String::from("mb-cache-migrate.json");
     let mut cache = MigrateCache::new();
 
     let solana_opts = parse_solana_config();
@@ -173,33 +164,11 @@ pub async fn migrate_collection(args: MigrateArgs) -> AnyResult<()> {
     let mut mint_accounts = if let Some(candy_machine_id) = args.candy_machine_id {
         get_mint_accounts(&args.client, &Some(candy_machine_id), 0, None, false, true).await?
     } else if let Some(mint_list) = args.mint_list {
-        let f = File::open(mint_list)?;
-        serde_json::from_reader(f)?
-    } else if let Some(cache_path) = args.cache_file {
-        cache_file_name = cache_path;
-
-        let f = File::open(&cache_file_name)?;
-        let cache: MigrateCache = serde_json::from_reader(f)?;
-        cache.0.keys().map(|k| k.to_string()).collect()
+        mint_list
     } else {
         return Err(anyhow!(
             "Please specify either a candy machine id or an mint_list file."
         ));
-    };
-
-    // If output file is specified, write to that file.
-    if let Some(path) = args.output_file {
-        cache_file_name = path;
-    }
-
-    let f = if !Path::new(&cache_file_name).exists() {
-        File::create(&cache_file_name)?
-    } else {
-        OpenOptions::new()
-            .read(true)
-            .write(true)
-            .truncate(true)
-            .open(&cache_file_name)?
     };
 
     let async_client = Arc::new(args.client);
@@ -244,9 +213,6 @@ pub async fn migrate_collection(args: MigrateArgs) -> AnyResult<()> {
             mint_accounts = cache.0.keys().map(|m| m.to_string()).collect();
         } else if migrate_failed.is_empty() {
             // None failed so we exit the loop.
-            break;
-        } else {
-            cache.write(f)?;
             break;
         }
     }

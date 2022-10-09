@@ -8,11 +8,11 @@ pub async fn get_collection_items(
     collection_mint: String,
     method: GetCollectionItemsMethods,
     api_key: Option<String>,
-) -> AnyResult<()> {
+) -> AnyResult<String> {
     match method {
         GetCollectionItemsMethods::TheIndexIO => {
             if let Some(key) = api_key {
-                get_collection_items_by_the_index_io(collection_mint, key).await?
+                return Ok(get_collection_items_by_the_index_io(collection_mint, key).await?);
             } else {
                 return Err(anyhow!(
                     "This method requires an index key for TheIndex.io."
@@ -20,13 +20,12 @@ pub async fn get_collection_items(
             }
         }
     }
-    Ok(())
 }
 
 pub async fn get_collection_items_by_the_index_io(
     collection_mint: String,
     api_key: String,
-) -> AnyResult<()> {
+) -> AnyResult<String> {
     let jrpc = JRPCRequest::new("getNFTsByCollection", vec![collection_mint.clone()]);
     let url = format!("{THE_INDEX_MAINNET}/{api_key}");
     let client = reqwest::Client::new();
@@ -41,23 +40,16 @@ pub async fn get_collection_items_by_the_index_io(
         .map(|nft| nft.metadata.mint.clone())
         .collect();
 
-    let file_name = format!("{collection_mint}_collection_items.json");
-    let f = File::create(&file_name).unwrap();
-
     mints.sort_unstable();
-    serde_json::to_writer_pretty(f, &mints).unwrap();
 
-    Ok(())
+    Ok(serde_json::to_string_pretty(&mints)?)
 }
 
 pub async fn check_collection_items(
     async_client: RpcClient,
     collection_mint: String,
-    mint_list_path: String,
-    debug: bool,
+    mut mint_list: Vec<String>,
 ) -> AnyResult<()> {
-    let f = File::open(mint_list_path)?;
-    let mut mint_list: Vec<String> = serde_json::from_reader(f)?;
     let mint_list_length = mint_list.len();
 
     let mut collections: HashMap<String, Vec<String>> = HashMap::new();
@@ -124,13 +116,6 @@ pub async fn check_collection_items(
         anyhow!("No mints found for this parent. Run with --debug to see more details.")
     })?;
     let keys: Vec<&String> = collections.keys().collect();
-
-    // Debug mode writes a JSON file containing all items and which collection parents they belong to.
-    if debug {
-        println!("Writing debug file...");
-        let out = File::create(format!("{collection_mint}-debug-collections.json"))?;
-        serde_json::to_writer_pretty(out, &collections)?;
-    }
 
     // Check if there's the only one and correct collection parent associated with the mint list and that all items in the list belong to it.
     if !keys.contains(&&collection_mint) || keys.len() != 1 || mint_items.len() != mint_list_length
