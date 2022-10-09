@@ -7,6 +7,9 @@ use std::str::FromStr;
 use crate::data::{NFTCreator, NFTData};
 use crate::utils::find_errors;
 
+pub mod keypair;
+pub mod solana_config;
+
 pub fn creator_is_verified(creators_opt: &Option<Vec<Creator>>, position: usize) -> bool {
     // Only add mints with a verified creator.
     if let Some(creators) = creators_opt {

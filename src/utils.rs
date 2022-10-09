@@ -255,8 +255,10 @@ pub async fn get_largest_token_account_owner(client: &RpcClient, mint: Pubkey) -
     let token_account = Pubkey::from_str(&token_accounts[0].address)?;
 
     let account = client
-        .get_account_with_commitment(&token_account, CommitmentConfig::confirmed()).await?
-        .value.unwrap();
+        .get_account_with_commitment(&token_account, CommitmentConfig::confirmed())
+        .await?
+        .value
+        .unwrap();
     let account_data = Account::unpack(&account.data)?;
 
     Ok(account_data.owner)

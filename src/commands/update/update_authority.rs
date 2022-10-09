@@ -10,12 +10,14 @@ pub struct SetUpdateAuthorityArgs<'a> {
     pub new_authority: Pubkey,
 }
 
-pub async fn set_update_authority<'a>(args: &SetUpdateAuthorityArgs<'a>) -> Result<Signature, ActionError> {
+pub async fn set_update_authority<'a>(
+    args: &SetUpdateAuthorityArgs<'a>,
+) -> Result<Signature, ActionError> {
     let mint_pubkey = &args.mint_account;
     let update_authority = args.keypair.pubkey();
     let new_update_authority = args.new_authority;
 
-    let metadata_account = get_metadata_pda(mint_pubkey.clone());
+    let metadata_account = get_metadata_pda(*mint_pubkey);
 
     let ix = update_metadata_accounts_v2(
         TOKEN_METADATA_PROGRAM_ID,
@@ -28,7 +30,8 @@ pub async fn set_update_authority<'a>(args: &SetUpdateAuthorityArgs<'a>) -> Resu
     );
     let recent_blockhash = args
         .client
-        .get_latest_blockhash().await
+        .get_latest_blockhash()
+        .await
         .map_err(|e| ActionError::ActionFailed(args.mint_account.to_string(), e.to_string()))?;
     let tx = Transaction::new_signed_with_payer(
         &[ix],
@@ -39,8 +42,9 @@ pub async fn set_update_authority<'a>(args: &SetUpdateAuthorityArgs<'a>) -> Resu
 
     let sig = args
         .client
-        .send_and_confirm_transaction(&tx).await
+        .send_and_confirm_transaction(&tx)
+        .await
         .map_err(|e| ActionError::ActionFailed(args.mint_account.to_string(), e.to_string()))?;
-        
+
     Ok(sig)
 }

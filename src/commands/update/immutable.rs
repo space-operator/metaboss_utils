@@ -2,16 +2,14 @@ use solana_sdk::signature::Signature;
 
 use super::common::*;
 
-pub struct SetPrimarySaleHappenedArgs<'a> {
-    pub client: &'a RpcClient,
+pub struct SetImmutableArgs {
+    pub client: Arc<RpcClient>,
     pub keypair: Arc<Keypair>,
-    pub mint_account: Pubkey,
+    pub mint_account: String,
 }
 
-pub async fn set_primary_sale_happened<'a>(
-    args: &SetPrimarySaleHappenedArgs<'a>,
-) -> Result<Signature, ActionError> {
-    let mint_pubkey = args.mint_account;
+pub async fn set_immutable(args: SetImmutableArgs) -> Result<Signature, ActionError> {
+    let mint_pubkey = Pubkey::from_str(&args.mint_account).expect("Invalid mint pubkey");
     let update_authority = args.keypair.pubkey();
     let metadata_account = get_metadata_pda(mint_pubkey);
 
@@ -21,8 +19,8 @@ pub async fn set_primary_sale_happened<'a>(
         update_authority,
         None,
         None,
-        Some(true),
         None,
+        Some(false),
     );
     let recent_blockhash = args
         .client
