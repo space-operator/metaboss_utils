@@ -1,3 +1,5 @@
+use solana_sdk::signature::Signature;
+
 use crate::parse::{keypair::parse_keypair, solana_config::parse_solana_config};
 
 use super::{common::*, update_data};
@@ -7,7 +9,7 @@ pub async fn update_name(
     keypair: Option<String>,
     mint_account: &str,
     new_name: &str,
-) -> AnyResult<()> {
+) -> AnyResult<Signature> {
     let solana_opts = parse_solana_config();
     let parsed_keypair = parse_keypair(keypair, solana_opts)?;
 
@@ -25,6 +27,6 @@ pub async fn update_name(
     };
 
     let mint_account = Pubkey::from_str(&mint_account)?;
-    update_data(client, &parsed_keypair, &mint_account, new_data).await?;
-    Ok(())
+    let sig = update_data(client, &parsed_keypair, &mint_account, new_data).await?;
+    Ok(sig)
 }
