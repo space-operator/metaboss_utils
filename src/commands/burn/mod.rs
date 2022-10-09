@@ -74,14 +74,14 @@ pub async fn burn<'a>(args: &BurnArgs<'a>) -> AnyResult<Signature> {
     Ok(sig)
 }
 
-pub struct BurnPrintArgs {
-    pub client: Arc<RpcClient>,
+pub struct BurnPrintArgs<'a> {
+    pub client: &'a RpcClient,
     pub keypair: Arc<Keypair>,
     pub mint_pubkey: Pubkey,
     pub master_mint_pubkey: Pubkey,
 }
 
-pub async fn burn_print(args: BurnPrintArgs) -> AnyResult<Signature> {
+pub async fn burn_print<'a>(args: BurnPrintArgs<'a>) -> AnyResult<Signature> {
     let print_edition_token =
         get_associated_token_address(&args.keypair.pubkey(), &args.mint_pubkey);
 
