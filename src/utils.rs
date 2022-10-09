@@ -46,7 +46,7 @@ pub async fn send_and_confirm_transaction(
 }
 
 pub async fn async_send_and_confirm_transaction(
-    async_client: Arc<RpcClient>,
+    async_client: &RpcClient,
     keypair: Arc<Keypair>,
     instructions: &[Instruction],
 ) -> Result<String> {

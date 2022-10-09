@@ -12,8 +12,8 @@ use mpl_token_metadata::instruction::set_and_verify_sized_collection_item;
 use std::ops::{Deref, DerefMut};
 use tokio::sync::Semaphore;
 
-pub struct MigrateArgs {
-    pub client: RpcClient,
+pub struct MigrateArgs<'a> {
+    pub client: &'a RpcClient,
     pub keypair: Option<String>,
     pub mint_address: String,
     pub candy_machine_id: Option<String>,
@@ -83,7 +83,7 @@ pub struct CacheItem {
 }
 
 async fn set_and_verify(
-    async_client: Arc<RpcClient>,
+    async_client: &RpcClient,
     authority_keypair: Arc<Keypair>,
     nft_mint: String,
     collection_mint: String,
@@ -148,7 +148,7 @@ async fn set_and_verify(
     Ok(())
 }
 
-pub async fn migrate_collection(args: MigrateArgs) -> AnyResult<()> {
+pub async fn migrate_collection<'a>(args: &MigrateArgs<'a>) -> AnyResult<()> {
     if args.candy_machine_id.is_some() && args.mint_list.is_some() {
         return Err(anyhow!(
             "Please specify either a candy machine id or an mint_list file, but not both."
@@ -159,11 +159,11 @@ pub async fn migrate_collection(args: MigrateArgs) -> AnyResult<()> {
     let mut cache = MigrateCache::new();
 
     let solana_opts = parse_solana_config();
-    let keypair = Arc::new(parse_keypair(args.keypair, solana_opts)?);
+    let keypair = Arc::new(parse_keypair(args.keypair.clone(), solana_opts)?);
 
-    let mut mint_accounts = if let Some(candy_machine_id) = args.candy_machine_id {
+    let mut mint_accounts = if let Some(candy_machine_id) = args.candy_machine_id.clone() {
         get_mint_accounts(&args.client, &Some(candy_machine_id), 0, None, false, true).await?
-    } else if let Some(mint_list) = args.mint_list {
+    } else if let Some(mint_list) = args.mint_list.clone() {
         mint_list
     } else {
         return Err(anyhow!(
@@ -180,28 +180,21 @@ pub async fn migrate_collection(args: MigrateArgs) -> AnyResult<()> {
         let remaining_mints = mint_accounts.clone();
 
         // Create a vector of futures to execute.
-        let mut migrate_tasks = Vec::new();
+        let mut migrate_failed = Vec::new();
         let semaphore = Arc::new(Semaphore::new(args.batch_size));
-
+        let async_client = Arc::new(*async_client);
         for mint in remaining_mints {
             let permit = Arc::clone(&semaphore).acquire_owned().await.unwrap();
             let async_client = async_client.clone();
             let keypair = keypair.clone();
             let mint_address = args.mint_address.clone();
 
-            migrate_tasks.push(tokio::spawn(async move {
-                let _permit = permit;
-
-                set_and_verify(async_client, keypair, mint, mint_address, false).await
-            }));
-        }
-
-        // Wait for all the tasks to resolve and push the results to our results vector
-        let mut migrate_failed = Vec::new();
-        for task in migrate_tasks {
-            match task.await.unwrap() {
-                Ok(_) => (),
-                Err(e) => migrate_failed.push(e),
+            let _permit = permit;
+            match set_and_verify(&async_client, keypair, mint, mint_address, false).await {
+                Ok(_) => {}
+                Err(e) => {
+                    migrate_failed.push(e);
+                }
             }
         }
 
