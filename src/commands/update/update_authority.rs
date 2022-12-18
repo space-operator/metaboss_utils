@@ -12,7 +12,7 @@ pub struct SetUpdateAuthorityArgs<'a> {
 
 pub async fn set_update_authority<'a>(
     args: &SetUpdateAuthorityArgs<'a>,
-) -> Result<Signature, ActionError> {
+) -> Result<(Signature, Transaction), ActionError> {
     let mint_pubkey = &args.mint_account;
     let update_authority = args.keypair.pubkey();
     let new_update_authority = args.new_authority;
@@ -46,5 +46,5 @@ pub async fn set_update_authority<'a>(
         .await
         .map_err(|e| ActionError::ActionFailed(args.mint_account.to_string(), e.to_string()))?;
 
-    Ok(sig)
+    Ok((sig, tx))
 }

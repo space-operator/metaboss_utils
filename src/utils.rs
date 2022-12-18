@@ -22,7 +22,7 @@ pub async fn send_and_confirm_transaction(
     client: &RpcClient,
     keypair: Keypair,
     instructions: &[Instruction],
-) -> Result<String> {
+) -> Result<(String, Transaction)> {
     let recent_blockhash = client.get_latest_blockhash().await?;
     let tx = Transaction::new_signed_with_payer(
         instructions,
@@ -42,14 +42,14 @@ pub async fn send_and_confirm_transaction(
     let sig = client.send_and_confirm_transaction(&tx).await?;
 
     log::debug!("TxId: {}", sig);
-    Ok(sig.to_string())
+    Ok((sig.to_string(), tx))
 }
 
 pub async fn async_send_and_confirm_transaction(
     async_client: &RpcClient,
     keypair: Arc<Keypair>,
     instructions: &[Instruction],
-) -> Result<String> {
+) -> Result<(String, Transaction)> {
     let recent_blockhash = async_client.get_latest_blockhash().await?;
     let tx = Transaction::new_signed_with_payer(
         instructions,
@@ -60,7 +60,7 @@ pub async fn async_send_and_confirm_transaction(
 
     let sig = async_client.send_and_confirm_transaction(&tx).await?;
 
-    Ok(sig.to_string())
+    Ok((sig.to_string(), tx))
 }
 
 pub fn generate_phf_map_var(var_name: &str) -> String {

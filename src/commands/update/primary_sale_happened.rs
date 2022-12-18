@@ -10,7 +10,7 @@ pub struct SetPrimarySaleHappenedArgs<'a> {
 
 pub async fn set_primary_sale_happened<'a>(
     args: &SetPrimarySaleHappenedArgs<'a>,
-) -> Result<Signature, ActionError> {
+) -> Result<(Signature, Transaction), ActionError> {
     let mint_pubkey = args.mint_account;
     let update_authority = args.keypair.pubkey();
     let metadata_account = get_metadata_pda(&mint_pubkey);
@@ -42,5 +42,5 @@ pub async fn set_primary_sale_happened<'a>(
         .await
         .map_err(|e| ActionError::ActionFailed(args.mint_account.to_string(), e.to_string()))?;
 
-    Ok(sig)
+    Ok((sig, tx))
 }

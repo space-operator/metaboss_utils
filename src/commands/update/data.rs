@@ -16,7 +16,7 @@ pub async fn update_data(
     keypair: &Keypair,
     mint_account: &Pubkey,
     data: DataV2,
-) -> Result<Signature> {
+) -> Result<(Signature, Transaction)> {
     let program_id = Pubkey::from_str(METAPLEX_PROGRAM_ID)?;
     let metadata_account = get_metadata_pda(mint_account);
 
@@ -41,5 +41,5 @@ pub async fn update_data(
 
     let sig = client.send_and_confirm_transaction(&tx).await?;
 
-    Ok(sig)
+    Ok((sig, tx))
 }
