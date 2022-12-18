@@ -8,7 +8,6 @@ use mpl_token_metadata::{
 pub use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::{
     pubkey::Pubkey,
-    signature::Signature,
     signer::{keypair::Keypair, Signer},
     transaction::Transaction,
 };
@@ -27,7 +26,7 @@ pub struct BurnArgs<'a> {
     pub mint_pubkey: Pubkey,
 }
 
-pub async fn burn<'a>(args: &BurnArgs<'a>) -> AnyResult<Signature> {
+pub async fn burn<'a>(args: &BurnArgs<'a>) -> AnyResult<Transaction> {
     let assoc = get_associated_token_address(&args.keypair.pubkey(), &args.mint_pubkey);
     let spl_token_program_id = spl_token::id();
     let metadata_pubkey = derive_metadata_pda(&args.mint_pubkey);
@@ -69,9 +68,7 @@ pub async fn burn<'a>(args: &BurnArgs<'a>) -> AnyResult<Signature> {
         recent_blockhash,
     );
 
-    let sig = args.client.send_and_confirm_transaction(&tx).await?;
-
-    Ok(sig)
+    Ok(tx)
 }
 
 pub struct BurnPrintArgs<'a> {
@@ -81,7 +78,7 @@ pub struct BurnPrintArgs<'a> {
     pub master_mint_pubkey: Pubkey,
 }
 
-pub async fn burn_print<'a>(args: BurnPrintArgs<'a>) -> AnyResult<Signature> {
+pub async fn burn_print<'a>(args: BurnPrintArgs<'a>) -> AnyResult<Transaction> {
     let print_edition_token =
         get_associated_token_address(&args.keypair.pubkey(), &args.mint_pubkey);
 
@@ -127,7 +124,5 @@ pub async fn burn_print<'a>(args: BurnPrintArgs<'a>) -> AnyResult<Signature> {
         recent_blockhash,
     );
 
-    let sig = args.client.send_and_confirm_transaction(&tx).await?;
-
-    Ok(sig)
+    Ok(tx)
 }

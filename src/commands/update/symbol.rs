@@ -1,5 +1,3 @@
-use solana_sdk::signature::Signature;
-
 use super::{common::*, update_data};
 
 pub async fn update_symbol(
@@ -7,7 +5,7 @@ pub async fn update_symbol(
     keypair: Keypair,
     mint_account: &Pubkey,
     new_symbol: &str,
-) -> AnyResult<Signature> {
+) -> AnyResult<Transaction> {
     let old_md = decode(&client, &mint_account)
         .await
         .map_err(|e| ActionError::ActionFailed(mint_account.to_string(), e.to_string()))?;
@@ -24,8 +22,8 @@ pub async fn update_symbol(
     };
 
     let mint_account = mint_account;
-    let sig = update_data(&client, &keypair, &mint_account, new_data)
+    let tx = update_data(&client, &keypair, &mint_account, new_data)
         .await
         .map_err(|e| ActionError::ActionFailed(mint_account.to_string(), e.to_string()))?;
-    Ok(sig)
+    Ok(tx)
 }

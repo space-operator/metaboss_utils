@@ -1,5 +1,3 @@
-use solana_sdk::signature::Signature;
-
 use crate::parse::{keypair::parse_keypair, solana_config::parse_solana_config};
 
 use super::{common::*, update_data};
@@ -12,7 +10,7 @@ pub async fn update_creator_by_position(
     mint_account: &Pubkey,
     new_creators: &str,
     should_append: bool,
-) -> AnyResult<Signature> {
+) -> AnyResult<Transaction> {
     let solana_opts = parse_solana_config();
     let keypair = parse_keypair(keypair_path, solana_opts)?;
 
@@ -51,8 +49,8 @@ pub async fn update_creator_by_position(
         collection: old_md.collection,
         uses: old_md.uses,
     };
-    let sig = update_data(client, &keypair, mint_account, new_data).await?;
-    Ok(sig)
+    let tx = update_data(client, &keypair, mint_account, new_data).await?;
+    Ok(tx)
 }
 
 pub async fn update_creator(
@@ -61,7 +59,7 @@ pub async fn update_creator(
     mint_account: Pubkey,
     new_creators: String,
     should_append: bool,
-) -> Result<Signature, ActionError> {
+) -> Result<Transaction, ActionError> {
     let old_md = match decode(&client, &mint_account).await {
         Ok(md) => md,
         Err(e) => {
@@ -119,7 +117,7 @@ pub async fn update_creator(
     };
 
     match update_data(&client, &keypair, &mint_account, new_data).await {
-        Ok(sig) => Ok(sig),
+        Ok(tx) => Ok(tx),
         Err(e) => Err(ActionError::ActionFailed(
             mint_account.to_string(),
             e.to_string(),
