@@ -4,7 +4,7 @@ use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::{
     pubkey::Pubkey,
     signer::{keypair::Keypair, Signer},
-    transaction::Transaction, signature::Signature,
+    transaction::Transaction,
 };
 use std::str::FromStr;
 
@@ -16,7 +16,7 @@ pub async fn update_data(
     keypair: &Keypair,
     mint_account: &Pubkey,
     data: DataV2,
-) -> Result<(Signature, Transaction)> {
+) -> Result<Transaction> {
     let program_id = Pubkey::from_str(METAPLEX_PROGRAM_ID)?;
     let metadata_account = get_metadata_pda(mint_account);
 
@@ -39,7 +39,5 @@ pub async fn update_data(
         recent_blockhash,
     );
 
-    let sig = client.send_and_confirm_transaction(&tx).await?;
-
-    Ok((sig, tx))
+    Ok(tx)
 }

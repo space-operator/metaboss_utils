@@ -1,5 +1,3 @@
-use solana_sdk::signature::Signature;
-
 use super::{common::*, update_data};
 
 pub async fn update_name(
@@ -7,7 +5,7 @@ pub async fn update_name(
     keypair: Keypair,
     mint_account: &Pubkey,
     new_name: &str,
-) -> AnyResult<(Signature, Transaction)> {
+) -> AnyResult<Transaction> {
     let old_md = decode(client, mint_account).await?;
     let data_with_old_name = old_md.data;
 
@@ -21,6 +19,6 @@ pub async fn update_name(
         uses: old_md.uses,
     };
 
-    let (sig, tx) = update_data(client, &keypair, mint_account, new_data).await?;
-    Ok((sig, tx))
+    let tx = update_data(client, &keypair, mint_account, new_data).await?;
+    Ok(tx)
 }

@@ -1,5 +1,3 @@
-use solana_sdk::signature::Signature;
-
 use super::common::*;
 
 pub struct SetUpdateAuthorityArgs<'a> {
@@ -12,7 +10,7 @@ pub struct SetUpdateAuthorityArgs<'a> {
 
 pub async fn set_update_authority<'a>(
     args: &SetUpdateAuthorityArgs<'a>,
-) -> Result<(Signature, Transaction), ActionError> {
+) -> Result<Transaction, ActionError> {
     let mint_pubkey = &args.mint_account;
     let update_authority = args.keypair.pubkey();
     let new_update_authority = args.new_authority;
@@ -40,11 +38,5 @@ pub async fn set_update_authority<'a>(
         recent_blockhash,
     );
 
-    let sig = args
-        .client
-        .send_and_confirm_transaction(&tx)
-        .await
-        .map_err(|e| ActionError::ActionFailed(args.mint_account.to_string(), e.to_string()))?;
-
-    Ok((sig, tx))
+    Ok(tx)
 }

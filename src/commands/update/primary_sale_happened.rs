@@ -1,5 +1,3 @@
-use solana_sdk::signature::Signature;
-
 use super::common::*;
 
 pub struct SetPrimarySaleHappenedArgs<'a> {
@@ -10,7 +8,7 @@ pub struct SetPrimarySaleHappenedArgs<'a> {
 
 pub async fn set_primary_sale_happened<'a>(
     args: &SetPrimarySaleHappenedArgs<'a>,
-) -> Result<(Signature, Transaction), ActionError> {
+) -> Result<Transaction, ActionError> {
     let mint_pubkey = args.mint_account;
     let update_authority = args.keypair.pubkey();
     let metadata_account = get_metadata_pda(&mint_pubkey);
@@ -36,11 +34,11 @@ pub async fn set_primary_sale_happened<'a>(
         recent_blockhash,
     );
 
-    let sig = args
-        .client
-        .send_and_confirm_transaction(&tx)
-        .await
-        .map_err(|e| ActionError::ActionFailed(args.mint_account.to_string(), e.to_string()))?;
+    // let sig = args
+    //     .client
+    //     .send_and_confirm_transaction(&tx)
+    //     .await
+    //     .map_err(|e| ActionError::ActionFailed(args.mint_account.to_string(), e.to_string()))?;
 
-    Ok((sig, tx))
+    Ok(tx)
 }

@@ -1,5 +1,3 @@
-use solana_sdk::signature::Signature;
-
 use super::common::*;
 
 pub struct SetImmutableArgs<'a> {
@@ -8,7 +6,7 @@ pub struct SetImmutableArgs<'a> {
     pub mint_account: Pubkey,
 }
 
-pub async fn set_immutable<'a>(args: SetImmutableArgs<'a>) -> Result<(Signature, Transaction), ActionError> {
+pub async fn set_immutable<'a>(args: SetImmutableArgs<'a>) -> Result<Transaction, ActionError> {
     let mint_pubkey = args.mint_account;
     let update_authority = args.keypair.pubkey();
     let metadata_account = get_metadata_pda(&mint_pubkey);
@@ -34,11 +32,5 @@ pub async fn set_immutable<'a>(args: SetImmutableArgs<'a>) -> Result<(Signature,
         recent_blockhash,
     );
 
-    let sig = args
-        .client
-        .send_and_confirm_transaction(&tx)
-        .await
-        .map_err(|e| ActionError::ActionFailed(args.mint_account.to_string(), e.to_string()))?;
-
-    Ok((sig, tx))
+    Ok(tx)
 }
