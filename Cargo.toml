@@ -14,7 +14,7 @@ bs58 = "0.4.0"
 futures = "0.3.24"
 indexmap = { version = "1.9.1", features = ["serde"] }
 log = "0.4.17"
-mpl-token-metadata = { version = "1.4", features = ["serde-feature"] }
+mpl-token-metadata = { version = "=1.7.0-alpha.2", features = ["serde-feature"] }
 phf = { version = "0.11", features = ["macros"] }
 reqwest = { version = "0.11.12", features = ["json"] }
 serde = "1.0.145"
